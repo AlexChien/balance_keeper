@@ -77,7 +77,7 @@ while True:
 
       if balance > THRESH:
          print(">> wallet_delegate_withdraw_pay %s, %s, %s" % (DELEGATE_NAME, PAYTO, THRESH))
-         # response = call("wallet_delegate_withdraw_pay", [DELEGATE_NAME, PAYTO, THRESH])
+         response = call("wallet_delegate_withdraw_pay", [DELEGATE_NAME, PAYTO, THRESH])
 
     time.sleep(CHECK_INTERVAL)
   except:
