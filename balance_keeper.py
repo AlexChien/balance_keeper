@@ -15,6 +15,9 @@ import datetime
 from pprint import pprint
 
 BTS_PRECISION = 100000
+# loop interval in seconds to check balance
+# set to 1 hour
+CHECK_INTERVAL = 60 * 60
 
 config_data = open('config.json')
 config = json.load(config_data)
@@ -25,7 +28,7 @@ url = config["bts_rpc"]["url"]
 
 WALLET_NAME = config["wallet_name"]
 
-DELEGATE_NAME = config["delegate_name"]
+DELEGATE_NAMES = config["delegate_name"]
 PAYTO = config["payto_account"]
 THRESH = config["balance_threshold"]
 
@@ -52,29 +55,30 @@ def call(method, params=[]):
       print "Warnning: rpc call error, retry 5 seconds later"
       time.sleep(5)
       continue
-    break  
+    break
   return None
 
 while True:
   try:
     os.system("clear")
-    print("\nRunning Balance Keeper")
- 
-    response = call("wallet_get_account", [DELEGATE_NAME] )
-    if "error" in response:
-      print("FATAL: Failed to get info:")
-      print(result["error"])
-      exit(1)
-    response = response["result"]
+    print("\nRunning Balance Keeper: %s" % time.strftime("%Y%m%dT%H%M%S", time.localtime(time.time())))
 
-    balance = response["delegate_info"]["pay_balance"] / BTS_PRECISION
+    for DELEGATE_NAME in DELEGATE_NAMES:
+      response = call("wallet_get_account", [DELEGATE_NAME] )
+      if "error" in response:
+        print("FATAL: Failed to get info:")
+        print(result["error"])
+        exit(1)
+      response = response["result"]
 
-    print ("Balance for %s is currently: %s BTS" % (DELEGATE_NAME, balance))
+      balance = response["delegate_info"]["pay_balance"] / BTS_PRECISION
 
-    if balance > THRESH:
-       print("wallet_delegate_withdraw_pay %s, %s, %s" % (DELEGATE_NAME, PAYTO, THRESH))
-       response = call("wallet_delegate_withdraw_pay", [DELEGATE_NAME, PAYTO, THRESH])
-    
-    time.sleep(1010)
+      print ("%s: %s BTS" % (DELEGATE_NAME, balance))
+
+      if balance > THRESH:
+         print(">> wallet_delegate_withdraw_pay %s, %s, %s" % (DELEGATE_NAME, PAYTO, THRESH))
+         # response = call("wallet_delegate_withdraw_pay", [DELEGATE_NAME, PAYTO, THRESH])
+
+    time.sleep(CHECK_INTERVAL)
   except:
-    time.sleep(1010)
+    time.sleep(CHECK_INTERVAL)
